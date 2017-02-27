@@ -50,6 +50,7 @@ HLTJetRoIBuilder :: HLTJetRoIBuilder (std::string className) :
   m_doHLTBJet(true),
   m_doHLTJet (false),
   m_readHLTTracks(true),
+  m_readHLTVertex(true),
   m_outContainerName(""),
   m_trigDecTool(nullptr),
   m_jetName("EFJet"),
@@ -247,11 +248,12 @@ EL::StatusCode HLTJetRoIBuilder :: buildHLTBJets ()
     if(m_readHLTTracks) trkCollections = comb->containerFeature<xAOD::TrackParticleContainer>(m_trkName);
     //std::vector< Trig::Feature<xAOD::TrackParticleContainer> >  ftfCollections  = comb->containerFeature<xAOD::TrackParticleContainer>("InDetTrigTrackingxAODCnv_Bjet_FTF");
     std::vector<Trig::Feature<xAOD::VertexContainer> > vtxCollections;
-    std::vector<Trig::Feature<xAOD::VertexContainer> > backupVtxCollections = comb->containerFeature<xAOD::VertexContainer>("EFHistoPrmVtx");
-
-    if(m_vtxName.size()){
+    std::vector<Trig::Feature<xAOD::VertexContainer> > backupVtxCollections;
+    if(m_readHLTVertex) backupVtxCollections = comb->containerFeature<xAOD::VertexContainer>("EFHistoPrmVtx");
+    
+    if(m_vtxName.size() && m_readHLTVertex){
       vtxCollections = comb->containerFeature<xAOD::VertexContainer>(m_vtxName);
-    }else{
+    }else if(m_readHLTVertex){
       vtxCollections = comb->containerFeature<xAOD::VertexContainer>();
     }
 
@@ -306,7 +308,7 @@ EL::StatusCode HLTJetRoIBuilder :: buildHLTBJets ()
     //  isValid = false;
     //}
 
-    if(vtxCollections.size() < jetCollections.size()){
+    if(m_readHLTVertex && vtxCollections.size() < jetCollections.size()){
       cout << "ERROR Problem in container size: " << m_name  
 	   << " jets: "<< jetCollections.size() << " " << m_jetName 
 	   << " vtx: "<< vtxCollections.size()  << " " << m_vtxName << endl;
@@ -421,8 +423,15 @@ EL::StatusCode HLTJetRoIBuilder :: buildHLTBJets ()
       //               0 - IDTrig  Found Vertex
       //               1 - EFHisto Found Vertex
       //               2 - No Vertex found
-      
-      if(!HelperFunctions::getPrimaryVertex(vtxCollections.at(ifeat).cptr(), true)){
+
+      if(!m_readHLTVertex){
+	if(m_debug) cout << "Don't read HLT Verticies as m_readHLTVertex is false" << endl;
+	m_vtx_hadDummyPV  (*newHLTBJet)         = '2';
+	m_vtx_decoration  (*newHLTBJet)         = 0;	    
+	m_vtx_decoration_bkg(*newHLTBJet)       = 0;
+      }
+ 
+      else if(!HelperFunctions::getPrimaryVertex(vtxCollections.at(ifeat).cptr(), true)){
 
 	if(m_debug){
 	  cout << "HAVE  No Online Vtx!!! m_vtxName is  " << m_vtxName << endl;
@@ -442,7 +451,7 @@ EL::StatusCode HLTJetRoIBuilder :: buildHLTBJets ()
 	  m_vtx_decoration  (*newHLTBJet)         = backup_pvx;	    
 	  m_vtx_decoration_bkg(*newHLTBJet)       = backup_pvx;	    
 	}else{
-	  cout << "No EFHistoPrmVtx....  " << endl;
+	  if(m_debug) cout << "No EFHistoPrmVtx....  " << endl;
 	  m_vtx_hadDummyPV  (*newHLTBJet)         = '2';
 	  m_vtx_decoration  (*newHLTBJet)         = 0;	    
 	  m_vtx_decoration_bkg(*newHLTBJet)       = 0;

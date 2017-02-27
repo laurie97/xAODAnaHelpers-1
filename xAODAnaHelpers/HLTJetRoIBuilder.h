@@ -14,6 +14,7 @@
 #include "xAODAnaHelpers/OnlineBeamSpotTool.h"
 #include "TrigDecisionTool/Feature.h"
 
+
 namespace Trig {
   class TrigDecisionTool;
 }
@@ -46,6 +47,11 @@ public:
     @brief Do we read in the HLT tracks?
    */
   bool        m_readHLTTracks;
+
+  /**
+    @brief Do we read in the HLT vertex?
+   */
+  bool        m_readHLTVertex;
 
 
   /**
